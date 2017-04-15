@@ -24,7 +24,8 @@ import sqlite3
 
 timeStamp = ""
 DIR = os.getcwd() + "/images/"
-print DIR
+if not os.path.exists("images"):
+    os.makedirs("images")
 
 def database_insert(str):
   global timeStamp
