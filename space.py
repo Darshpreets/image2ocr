@@ -14,15 +14,38 @@ from datetime import datetime
 import sys
 #offline text extraction
 import pytesseract
+import os
+import sqlite3
 
-imageName = ""
+timeStamp = ""
+DIR = os.getcwd() + "/images/"
+print DIR
+
+def database_insert(str):
+  global timeStamp
+  conn = sqlite3.connect('records.db')
+  conn.execute('''CREATE TABLE IF NOT EXISTS records
+       (datetime TEXT PRIMARY KEY NOT NULL,
+       path  TEXT NOT NULL,
+       ocrtext TEXT );''')
+  conn.execute("""INSERT INTO records (datetime, path, ocrtext)
+       VALUES ( '""" + timeStamp  + """', ' """ 
+       + DIR + timeStamp + ".jpg" + """', ' """ 
+       + str + """')""")
+  conn.commit()
+  conn.close()
+
+def database_query():
+  for row in conn.execute('SELECT * FROM records'):
+    print row
+
 
 def save_image(e):
-  global imageName
-  imageName = datetime.now().strftime('%Y-%m-%d-%H:%M:%S') + ".jpg"
+  global timeStamp
+  timeStamp = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
   camera = cv2.VideoCapture(0) #0 for default 
   retval, cameraCapture = camera.read()
-  cv2.imwrite(imageName, cameraCapture)
+  cv2.imwrite(DIR + timeStamp + ".jpg", cameraCapture)
   del(camera)
 
 #To check internet connection
@@ -51,7 +74,7 @@ def ocr_space_file(filename, overlay=False, api_key='890b59f2b188957', language=
   return r.content.decode()
 
 def show_result(str):
-  global imageName
+  global timeStamp
   toplevel = Toplevel()
   text = Text(toplevel)
   scroll = Scrollbar(toplevel, command=text.yview)
@@ -62,19 +85,20 @@ def show_result(str):
 
 
 def do_ocr(e):
-  global imageName
+  global timeStamp
   if is_connected():
-    data = json.loads(ocr_space_file(filename=imageName))
+    data = json.loads(ocr_space_file(filename=DIR + timeStamp + ".jpg"))
     if not data['ParsedResults'][0]['ErrorMessage']:
-      print("\nOutput: "data['ParsedResults'][0]['ParsedText'])
-      show_result(str="\n\tOutput:\n" + data['ParsedResults'][0]['ParsedText'])
+      value = data['ParsedResults'][0]['ParsedText']
+      print("\nOutput: " + value)
+      show_result(str="\n\tOutput:\n" + value)
+      database_insert(str = value)
     else:
-      print("\nError: " + data['ParsedResults'][0]['ErrorDetails'])
-      show_result(str="\n\tError:\n" + data['ParsedResults'][0]['ErrorDetails'])
+      errorMsg = data['ParsedResults'][0]['ErrorDetails']
+      print("\nError: " + errorMsg)
+      show_result(str="\n\tError:\n" + errorMsg)
   else:
-    show_result(pytesseract.image_to_string(Image.open(imageName)))
-
-
+    show_result(pytesseract.image_to_string(Image.open(DIR + timeStamp + ".jpg")))
 
 root = Tk()
 root.title("OCR")
