@@ -6,8 +6,13 @@ import json
 import socket
 #GUI using Tkinter
 from Tkinter import *
-#openCV
-import cv2
+
+import pygame.camera    
+pygame.camera.init()
+cam = pygame.camera.Camera(pygame.camera.list_cameras()[0])
+#image saving
+import pygame.image
+
 #for datetime
 from datetime import datetime
 #tesseract
@@ -42,11 +47,12 @@ def database_query():
 
 def save_image(e):
   global timeStamp
+  cam.start()
+  img = cam.get_image()
   timeStamp = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
-  camera = cv2.VideoCapture(0) #0 for default 
-  retval, cameraCapture = camera.read()
-  cv2.imwrite(DIR + timeStamp + ".jpg", cameraCapture)
-  del(camera)
+  pygame.image.save(img, DIR + timeStamp + ".jpg")
+  cam.stop()
+  pygame.camera.quit()
 
 #To check internet connection
 REMOTE_SERVER = "www.google.com"
