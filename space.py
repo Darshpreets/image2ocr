@@ -56,7 +56,6 @@ def show_result(str):
   text = Text(toplevel)
   scroll = Scrollbar(toplevel, command=text.yview)
   text.configure(yscrollcommand=scroll.set)
-  text.insert(END,'\n\tOutput:\n')
   text.insert(END, str)
   text.pack(side=LEFT)
   scroll.pack(side=RIGHT, fill=Y)
@@ -66,8 +65,12 @@ def do_ocr(e):
   global imageName
   if is_connected():
     data = json.loads(ocr_space_file(filename=imageName))
-    # print(data['ParsedResults'][0]['ParsedText'])
-    show_result(str=data['ParsedResults'][0]['ParsedText'])
+    if not data['ParsedResults'][0]['ErrorMessage']:
+      print("\nOutput: "data['ParsedResults'][0]['ParsedText'])
+      show_result(str="\n\tOutput:\n" + data['ParsedResults'][0]['ParsedText'])
+    else:
+      print("\nError: " + data['ParsedResults'][0]['ErrorDetails'])
+      show_result(str="\n\tError:\n" + data['ParsedResults'][0]['ErrorDetails'])
   else:
     show_result(pytesseract.image_to_string(Image.open(imageName)))
 
